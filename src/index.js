@@ -34,32 +34,37 @@ app.use(handlePreflight);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
 
-// Health check route - place before API routes
+// Admin routes
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html'));
+});
+
+app.get('/admin/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html'));
+});
+
+app.get('/admin/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html'));
+});
+
+app.get('/admin/products', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'products.html'));
+});
+
+// Health check route
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy',
     timestamp: new Date().toISOString()
-  });
-});
-
-// Root route
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Welcome to Snackolicious Delights API',
-    version: '1.0.0',
-    endpoints: {
-      health: '/health',
-      products: '/api/products',
-      auth: '/api/auth',
-      cart: '/api/cart',
-      orders: '/api/orders'
-    }
   });
 });
 
@@ -73,6 +78,25 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/delivery', deliveryRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/pincodes', pincodeRoutes);
+
+// Root route - only respond with JSON if /api is accessed
+app.get('/', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    res.json({ 
+      message: 'Welcome to Snackolicious Delights API',
+      version: '1.0.0',
+      endpoints: {
+        health: '/health',
+        products: '/api/products',
+        auth: '/api/auth',
+        cart: '/api/cart',
+        orders: '/api/orders'
+      }
+    });
+  } else {
+    res.redirect('/admin/login');
+  }
+});
 
 // Handle 404s
 app.use(notFoundHandler);
