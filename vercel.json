@@ -12,7 +12,10 @@
   "routes": [
     {
       "src": "/uploads/(.*)",
-      "dest": "/uploads/$1"
+      "dest": "/src/uploads/$1",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
     },
     {
       "src": "/api/(.*)",
@@ -22,5 +25,8 @@
       "src": "/(.*)",
       "dest": "/src/index.js"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 } 
