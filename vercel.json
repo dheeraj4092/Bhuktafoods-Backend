@@ -5,18 +5,11 @@
       "src": "src/index.js",
       "use": "@vercel/node",
       "config": {
-        "engine": "18.x"
+        "includeFiles": ["src/**"]
       }
     }
   ],
   "routes": [
-    {
-      "src": "/uploads/(.*)",
-      "dest": "/src/uploads/$1",
-      "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
-    },
     {
       "src": "/api/(.*)",
       "dest": "/src/index.js"

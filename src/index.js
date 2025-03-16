@@ -15,7 +15,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import subscriptionRoutes from './routes/subscriptionRoutes.js';
 import deliveryRoutes from './routes/deliveryRoutes.js';
-import userRoutes from './routes/userRoutes.js'; // Ensure this path is correct
+import userRoutes from './routes/userRoutes.js';
 import pincodeRoutes from './routes/pincode.js';
 
 // Import error handlers
@@ -59,9 +59,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
 // Serve static files - make sure this comes before API routes
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -73,7 +70,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/delivery', deliveryRoutes);
-app.use('/api/users', userRoutes); // Ensure this route is correctly defined
+app.use('/api/users', userRoutes);
 app.use('/api/pincodes', pincodeRoutes);
 
 // Serve admin dashboard - ensure these routes work with the static file serving
@@ -109,13 +106,31 @@ app.get('/', (req, res) => {
 // Handle 404s
 app.use(notFoundHandler);
 
-// Error handling
-app.use(errorHandler);
+// Error handling with improved logging
+app.use((err, req, res, next) => {
+  console.error('Error details:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    body: req.body,
+    query: req.query
+  });
+  
+  res.status(err.status || 500).json({
+    error: {
+      message: process.env.NODE_ENV === 'production' 
+        ? 'Internal server error' 
+        : err.message,
+      status: err.status || 500
+    }
+  });
+});
 
 // Start server
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Admin dashboard available at http://localhost:${PORT}/admin`);
-  console.log(`Admin login available at http://localhost:${PORT}/admin/login`);
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('CORS origins:', allowedOrigins);
 });
