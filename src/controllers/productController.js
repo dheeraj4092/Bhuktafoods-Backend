@@ -29,25 +29,36 @@ export const uploadMiddleware = upload;
 // Get all products
 export const getProducts = async (req, res) => {
   try {
+    console.log('Fetching products...');
+    
     const { data: products, error } = await supabase
       .from('products')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Get products error:', error);
+      console.error('Get products database error:', error);
       return res.status(500).json({ 
         error: 'Database error',
-        message: 'Failed to fetch products'
+        message: 'Failed to fetch products',
+        details: error.message
       });
     }
 
+    if (!products || products.length === 0) {
+      console.log('No products found in database');
+    } else {
+      console.log(`Found ${products.length} products`);
+    }
+
+    // Always return an array, even if empty
     res.json(products || []);
   } catch (error) {
-    console.error('Get products error:', error);
+    console.error('Get products server error:', error);
     res.status(500).json({ 
       error: 'Server error',
-      message: 'Failed to fetch products'
+      message: 'Failed to fetch products',
+      details: error.message
     });
   }
 };

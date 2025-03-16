@@ -9,11 +9,23 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "src/index.js"
+      "dest": "src/index.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization, x-my-custom-header",
+        "Access-Control-Allow-Credentials": "true"
+      }
     },
     {
       "src": "/admin/(.*)",
-      "dest": "src/index.js"
+      "dest": "src/index.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization, x-my-custom-header",
+        "Access-Control-Allow-Credentials": "true"
+      }
     },
     {
       "src": "/health",
@@ -21,7 +33,13 @@
     },
     {
       "src": "/(.*)",
-      "dest": "src/index.js"
+      "dest": "src/index.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization, x-my-custom-header",
+        "Access-Control-Allow-Credentials": "true"
+      }
     }
   ]
 } 
