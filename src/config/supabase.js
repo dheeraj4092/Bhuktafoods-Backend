@@ -3,42 +3,40 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-if (!process.env.SUPABASE_URL) {
-  throw new Error('SUPABASE_URL is required');
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
+  throw new Error('Missing required Supabase environment variables');
 }
 
-if (!process.env.SUPABASE_ANON_KEY) {
-  throw new Error('SUPABASE_ANON_KEY is required');
-}
-
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('SUPABASE_SERVICE_ROLE_KEY is required');
-}
-
-// Regular client for user operations
-export const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-      detectSessionInUrl: false
+// Regular client for user operations with optimized settings for serverless
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+    detectSessionInUrl: false
+  },
+  global: {
+    headers: {
+      'x-my-custom-header': 'bhuktafoods-backend'
     }
   }
-);
+});
 
-// Admin client for administrative operations
-export const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+// Admin client for administrative operations with optimized settings for serverless
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  },
+  global: {
+    headers: {
+      'x-my-custom-header': 'bhuktafoods-backend-admin'
     }
   }
-);
+});
 
 // Database table names
 export const TABLES = {

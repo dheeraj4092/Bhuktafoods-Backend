@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import express from 'express';
-import cors from 'cors';
+import { corsMiddleware, handlePreflight } from './config/cors.js';
 
 // Load environment variables
 dotenv.config();
@@ -28,26 +28,9 @@ const __dirname = path.dirname(__filename);
 // Initialize Express app
 const app = express();
 
-// Middleware
-const allowedOrigins = [
-  'https://www.bhuktafoods.com',
-  'https://bhuktafoods.com',
-  process.env.CORS_ORIGIN || 'http://localhost:3000'
-];
-
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true
-}));
+// Apply CORS middleware
+app.use(corsMiddleware);
+app.use(handlePreflight);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -106,36 +89,8 @@ app.get('/', (req, res) => {
 // Handle 404s
 app.use(notFoundHandler);
 
-// Error handling with improved logging
-app.use((err, req, res, next) => {
-  // Log detailed error information
-  console.error('Detailed Error Information:', {
-    message: err.message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-    headers: req.headers,
-    body: req.body,
-    query: req.query,
-    params: req.params,
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    nodeVersion: process.version,
-    memoryUsage: process.memoryUsage()
-  });
-  
-  // Send error response
-  res.status(err.status || 500).json({
-    error: {
-      message: process.env.NODE_ENV === 'production' 
-        ? 'Internal server error' 
-        : err.message,
-      status: err.status || 500,
-      path: req.path,
-      timestamp: new Date().toISOString()
-    }
-  });
-});
+// Error handling
+app.use(errorHandler);
 
 // For local development
 if (process.env.NODE_ENV !== 'production') {
@@ -143,7 +98,6 @@ if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log('Environment:', process.env.NODE_ENV);
-    console.log('CORS origins:', allowedOrigins);
   });
 }
 

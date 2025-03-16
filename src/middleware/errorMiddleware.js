@@ -1,94 +1,52 @@
 // Error handling middleware
 export const errorHandler = (err, req, res, next) => {
-  // Log the full error stack
-  console.error('Error occurred:', {
+  console.error('Error details:', {
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     path: req.path,
     method: req.method,
-    error: err.message,
-    stack: err.stack
+    body: req.body,
+    query: req.query,
+    timestamp: new Date().toISOString(),
+    supabaseError: err.supabaseError || undefined
   });
 
-  // Handle multer errors
-  if (err.name === 'MulterError') {
-    return res.status(400).json({
-      error: 'File upload error',
-      message: err.message,
-      code: 'FILE_UPLOAD_ERROR',
-      details: {
-        field: err.field,
-        code: err.code
-      }
+  // Handle Supabase-specific errors
+  if (err.supabaseError) {
+    return res.status(err.status || 500).json({
+      error: 'Database operation failed',
+      message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error',
+      code: err.supabaseError.code
     });
   }
 
-  // Handle JWT errors
-  if (err.name === 'JsonWebTokenError') {
+  // Handle authentication errors
+  if (err.name === 'UnauthorizedError' || err.status === 401) {
     return res.status(401).json({
-      error: 'Invalid token',
-      message: err.message,
-      code: 'INVALID_TOKEN'
-    });
-  }
-
-  if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({
-      error: 'Token expired',
-      message: 'Please log in again',
-      code: 'TOKEN_EXPIRED'
-    });
-  }
-
-  // Handle Supabase errors
-  if (err.code && err.code.startsWith('PGRST')) {
-    return res.status(400).json({
-      error: 'Database error',
-      message: err.message,
-      code: err.code,
-      details: process.env.NODE_ENV === 'development' ? err.details : undefined
-    });
-  }
-
-  // Handle Stripe errors
-  if (err.type && err.type.startsWith('Stripe')) {
-    return res.status(400).json({
-      error: 'Payment error',
-      message: err.message,
-      code: err.code,
-      type: err.type
+      error: 'Authentication failed',
+      message: 'Invalid or expired token'
     });
   }
 
   // Handle validation errors
   if (err.name === 'ValidationError') {
     return res.status(400).json({
-      error: 'Validation error',
-      message: err.message,
-      code: 'VALIDATION_ERROR',
-      details: err.details
+      error: 'Validation failed',
+      message: err.message
     });
   }
 
   // Default error
-  res.status(500).json({
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
-    code: 'INTERNAL_SERVER_ERROR',
-    requestId: req.id // Useful for tracking errors in logs
+  res.status(err.status || 500).json({
+    error: 'Server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
 };
 
 // 404 handler
 export const notFoundHandler = (req, res) => {
-  console.log('Resource not found:', {
-    path: req.path,
-    method: req.method,
-    ip: req.ip
-  });
-  
   res.status(404).json({
-    error: 'Not Found',
-    message: 'The requested resource was not found',
-    code: 'RESOURCE_NOT_FOUND',
-    path: req.path
+    error: 'Not found',
+    message: `Cannot ${req.method} ${req.path}`
   });
 }; 
