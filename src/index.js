@@ -36,8 +36,31 @@ app.use(express.urlencoded({ extended: true }));
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`Incoming request: ${req.method} ${req.path}`);
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
+});
+
+// Health check route - place before API routes
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Welcome to Snackolicious Delights API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      products: '/api/products',
+      auth: '/api/auth',
+      cart: '/api/cart',
+      orders: '/api/orders'
+    }
+  });
 });
 
 // API routes
@@ -50,16 +73,6 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/delivery', deliveryRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/pincodes', pincodeRoutes);
-
-// Root route
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Snackolicious Delights API' });
-});
-
-// API health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy' });
-});
 
 // Handle 404s
 app.use(notFoundHandler);
@@ -76,6 +89,7 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+// Export the Express app
 export default app;
 
 // Serverless handler for Vercel

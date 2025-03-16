@@ -3,68 +3,13 @@
   "builds": [
     {
       "src": "src/index.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["src/**"],
-        "maxLambdaSize": "50mb"
-      }
+      "use": "@vercel/node"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/health",
-      "dest": "src/index.js",
-      "methods": ["GET"]
-    },
-    {
-      "src": "/api/auth/(.*)",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/api/products/(.*)",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/api/cart/(.*)",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/api/orders/(.*)",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/api/admin/(.*)",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/api/subscriptions/(.*)",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/api/delivery/(.*)",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/api/users/(.*)",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/api/pincodes/(.*)",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/admin/(.*)",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "src/index.js",
-      "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-        "Access-Control-Allow-Credentials": "true"
-      }
+      "source": "/(.*)",
+      "destination": "/src/index.js"
     }
   ]
 } 
