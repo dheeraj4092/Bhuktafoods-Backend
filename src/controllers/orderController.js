@@ -4,35 +4,52 @@ import { sendOrderConfirmationEmail, sendAdminNotificationEmail } from '../servi
 // Create order
 export const createOrder = async (req, res) => {
   try {
-    const { items, shippingAddress } = req.body;
+    console.log('Creating order with payload:', req.body);
+    console.log('Authenticated user:', req.user);
+
+    const { items, shipping_address, total_amount } = req.body;
     
-    // Calculate total amount
-    const total_amount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-    
-    // Start a transaction to create the order
+    // Validate required fields
+    if (!items || !Array.isArray(items)) {
+      throw new Error('Items array is required');
+    }
+    if (!shipping_address) {
+      throw new Error('Shipping address is required');
+    }
+    if (!total_amount) {
+      throw new Error('Total amount is required');
+    }
+
+    // Create order
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
         user_id: req.user.id,
-        shipping_address: shippingAddress,
-        total_amount: parseFloat(total_amount.toFixed(2)),
+        shipping_address,
+        total_amount: parseFloat(total_amount),
         status: 'processing'
       })
       .select()
       .single();
 
     if (orderError) {
-      console.error('Error creating order:', orderError);
+      console.error('Error creating order:', {
+        error: orderError,
+        user: req.user.id,
+        payload: req.body
+      });
       throw orderError;
     }
+
+    console.log('Order created:', order);
 
     // Create order items
     const orderItems = items.map(item => ({
       order_id: order.id,
-      product_id: item.id,
+      product_id: item.product_id,
       quantity: parseInt(item.quantity),
       quantity_unit: item.quantity_unit || '250g',
-      price_at_time: parseFloat(item.price)
+      price_at_time: parseFloat(item.unit_price)
     }));
 
     const { error: itemsError } = await supabase
@@ -40,42 +57,14 @@ export const createOrder = async (req, res) => {
       .insert(orderItems);
 
     if (itemsError) {
-      console.error('Error creating order items:', itemsError);
+      console.error('Error creating order items:', {
+        error: itemsError,
+        items: orderItems
+      });
       throw itemsError;
     }
 
-    // Update product stock
-    for (const item of items) {
-      const { error: stockError } = await supabase
-        .from('products')
-        .update({ 
-          stock_quantity: supabase.raw('stock_quantity - ?', [parseInt(item.quantity)])
-        })
-        .eq('id', item.id);
-
-      if (stockError) {
-        console.error('Error updating stock:', stockError);
-        throw stockError;
-      }
-    }
-
-    // Clear cart items
-    const { error: cartError } = await supabase
-      .from('cart_items')
-      .delete()
-      .in('cart_id', 
-        supabase
-          .from('shopping_cart')
-          .select('id')
-          .eq('user_id', req.user.id)
-      );
-
-    if (cartError) {
-      console.error('Error clearing cart:', cartError);
-      // Don't throw here, as the order is already created
-    }
-
-    // Get the created order details
+    // Get the complete order details
     const { data: orderDetails, error: detailsError } = await supabase
       .from('orders')
       .select(`
@@ -100,19 +89,21 @@ export const createOrder = async (req, res) => {
       throw detailsError;
     }
 
-    // Send emails asynchronously - don't wait for them
+    // Send emails asynchronously
     Promise.all([
-      sendOrderConfirmationEmail(orderDetails, shippingAddress.email),
+      sendOrderConfirmationEmail(orderDetails, shipping_address.email),
       sendAdminNotificationEmail(orderDetails)
     ]).catch(error => {
       console.error('Error sending order emails:', error);
-      // Log to your error tracking service
     });
 
-    // Respond with the order details
-    res.status(201).json(orderDetails);
+    // Return success response
+    res.status(201).json({
+      message: 'Order created successfully',
+      order: orderDetails
+    });
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error('Error in createOrder:', error);
     res.status(500).json({ 
       error: 'Failed to create order', 
       details: error.message,

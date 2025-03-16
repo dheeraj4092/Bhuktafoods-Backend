@@ -94,6 +94,29 @@ CREATE TABLE IF NOT EXISTS public.orders (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
+-- Enable RLS on orders table
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for orders table
+CREATE POLICY "Users can create their own orders" ON public.orders
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view their own orders" ON public.orders
+    FOR SELECT
+    TO authenticated
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Admin can view all orders" ON public.orders
+    FOR ALL
+    TO authenticated
+    USING (EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE profiles.id = auth.uid()
+        AND profiles.role = 'admin'
+    ));
+
 -- Order items table
 CREATE TABLE IF NOT EXISTS public.order_items (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -103,6 +126,43 @@ CREATE TABLE IF NOT EXISTS public.order_items (
     price_at_time DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+-- Enable RLS on order_items table
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for order_items table
+CREATE POLICY "Users can create order items for their orders" ON public.order_items
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (EXISTS (
+        SELECT 1 FROM public.orders
+        WHERE orders.id = order_items.order_id
+        AND orders.user_id = auth.uid()
+    ));
+
+CREATE POLICY "Users can view their order items" ON public.order_items
+    FOR SELECT
+    TO authenticated
+    USING (EXISTS (
+        SELECT 1 FROM public.orders
+        WHERE orders.id = order_items.order_id
+        AND orders.user_id = auth.uid()
+    ));
+
+CREATE POLICY "Admin can manage all order items" ON public.order_items
+    FOR ALL
+    TO authenticated
+    USING (EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE profiles.id = auth.uid()
+        AND profiles.role = 'admin'
+    ));
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
+CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON public.order_items(product_id);
 
 -- Subscriptions table
 CREATE TABLE IF NOT EXISTS public.subscriptions (
@@ -137,8 +197,6 @@ CREATE TABLE IF NOT EXISTS public.user_subscriptions (
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category);
 CREATE INDEX IF NOT EXISTS idx_products_rating ON public.products(rating);
-CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
-CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_shopping_cart_user_id ON public.shopping_cart(user_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON public.user_subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON public.user_subscriptions(status);
@@ -148,8 +206,6 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.product_reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shopping_cart ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 
@@ -193,26 +249,6 @@ CREATE POLICY "Users can view their own cart"
 CREATE POLICY "Users can modify their own cart"
     ON public.shopping_cart FOR ALL
     USING (auth.uid() = user_id);
-
--- Orders policies
-CREATE POLICY "Users can view their own orders"
-    ON public.orders FOR SELECT
-    USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can create their own orders"
-    ON public.orders FOR INSERT
-    WITH CHECK (auth.uid() = user_id);
-
--- Order items policies
-CREATE POLICY "Users can view their own order items"
-    ON public.order_items FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.orders
-            WHERE orders.id = order_items.order_id
-            AND orders.user_id = auth.uid()
-        )
-    );
 
 -- Subscriptions policies
 CREATE POLICY "Anyone can view subscriptions"
