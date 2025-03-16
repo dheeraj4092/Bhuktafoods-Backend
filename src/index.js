@@ -108,29 +108,44 @@ app.use(notFoundHandler);
 
 // Error handling with improved logging
 app.use((err, req, res, next) => {
-  console.error('Error details:', {
+  // Log detailed error information
+  console.error('Detailed Error Information:', {
     message: err.message,
     stack: err.stack,
     path: req.path,
     method: req.method,
+    headers: req.headers,
     body: req.body,
-    query: req.query
+    query: req.query,
+    params: req.params,
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    nodeVersion: process.version,
+    memoryUsage: process.memoryUsage()
   });
   
+  // Send error response
   res.status(err.status || 500).json({
     error: {
       message: process.env.NODE_ENV === 'production' 
         ? 'Internal server error' 
         : err.message,
-      status: err.status || 500
+      status: err.status || 500,
+      path: req.path,
+      timestamp: new Date().toISOString()
     }
   });
 });
 
-// Start server
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('Environment:', process.env.NODE_ENV);
-  console.log('CORS origins:', allowedOrigins);
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('CORS origins:', allowedOrigins);
+  });
+}
+
+// Export the app for serverless deployment
+export default app;
