@@ -69,6 +69,7 @@ main {
     border-radius: 1rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     transition: transform 0.2s;
+    margin-bottom: 1rem;
 }
 
 .card:hover {
@@ -93,11 +94,19 @@ main {
 }
 
 /* Table Styles */
+.table-responsive {
+    margin-bottom: 1rem;
+    border-radius: 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 .table {
     background-color: white;
     border-radius: 1rem;
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 0;
 }
 
 .table thead th {
@@ -108,6 +117,7 @@ main {
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
+    white-space: nowrap;
 }
 
 .table td {
@@ -193,14 +203,86 @@ main {
         width: 100%;
         height: auto;
         min-height: auto;
+        transform: translateX(-100%);
+    }
+
+    #sidebar.show {
+        transform: translateX(0);
     }
 
     main {
-        margin-top: 60px;
+        margin-left: 0 !important;
+        padding: 1rem;
     }
 
     .card {
         margin-bottom: 1rem;
+    }
+
+    .table-responsive {
+        margin: 0 -1rem;
+        width: calc(100% + 2rem);
+    }
+
+    .table td, .table th {
+        min-width: 120px;
+        padding: 0.75rem;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    .modal-content {
+        border-radius: 0.5rem;
+    }
+
+    .btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .d-flex {
+        flex-direction: column;
+    }
+
+    .d-flex .btn {
+        margin-top: 0.5rem;
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    main {
+        padding: 0.75rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .modal-header, .modal-body, .modal-footer {
+        padding: 1rem;
+    }
+
+    .table td, .table th {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        margin: 0.25rem 0;
+        border-radius: 0.5rem !important;
     }
 }
 
@@ -223,4 +305,33 @@ main {
     z-index: 1050;
     border-radius: 0.5rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Navigation Toggle */
+.navbar-toggler {
+    display: none;
+    border: none;
+    background: transparent;
+    padding: 0.5rem;
+    margin-right: 1rem;
+}
+
+@media (max-width: 768px) {
+    .navbar-toggler {
+        display: block;
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 1001;
+    }
+
+    .navbar-toggler-icon {
+        display: inline-block;
+        width: 1.5em;
+        height: 1.5em;
+        vertical-align: middle;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 100%;
+    }
 } 
