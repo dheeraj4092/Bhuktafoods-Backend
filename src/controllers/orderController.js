@@ -20,17 +20,19 @@ export const createOrder = async (req, res) => {
       throw new Error('Total amount is required');
     }
 
-    // Create order
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        user_id: req.user.id,
-        shipping_address,
-        total_amount: parseFloat(total_amount),
-        status: 'processing'
-      })
-      .select()
-      .single();
+    // Call the create_order function
+    const { data: orderResult, error: orderError } = await supabase
+      .rpc('create_order', {
+        p_user_id: req.user.id,
+        p_shipping_address: shipping_address,
+        p_items: items.map(item => ({
+          product_id: item.product_id,
+          quantity: parseInt(item.quantity),
+          quantity_unit: item.quantity_unit || '250g',
+          unit_price: parseFloat(item.unit_price)
+        })),
+        p_total_amount: parseFloat(total_amount)
+      });
 
     if (orderError) {
       console.error('Error creating order:', {
@@ -41,58 +43,12 @@ export const createOrder = async (req, res) => {
       throw orderError;
     }
 
-    console.log('Order created:', order);
-
-    // Create order items
-    const orderItems = items.map(item => ({
-      order_id: order.id,
-      product_id: item.product_id,
-      quantity: parseInt(item.quantity),
-      quantity_unit: item.quantity_unit || '250g',
-      price_at_time: parseFloat(item.unit_price)
-    }));
-
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-
-    if (itemsError) {
-      console.error('Error creating order items:', {
-        error: itemsError,
-        items: orderItems
-      });
-      throw itemsError;
-    }
-
-    // Get the complete order details
-    const { data: orderDetails, error: detailsError } = await supabase
-      .from('orders')
-      .select(`
-        *,
-        order_items (
-          id,
-          quantity,
-          quantity_unit,
-          price_at_time,
-          products (
-            id,
-            name,
-            image_url
-          )
-        )
-      `)
-      .eq('id', order.id)
-      .single();
-
-    if (detailsError) {
-      console.error('Error fetching order details:', detailsError);
-      throw detailsError;
-    }
+    console.log('Order created:', orderResult);
 
     // Send emails asynchronously
     Promise.all([
-      sendOrderConfirmationEmail(orderDetails, shipping_address.email),
-      sendAdminNotificationEmail(orderDetails)
+      sendOrderConfirmationEmail(orderResult.order, shipping_address.email),
+      sendAdminNotificationEmail(orderResult.order)
     ]).catch(error => {
       console.error('Error sending order emails:', error);
     });
@@ -100,7 +56,7 @@ export const createOrder = async (req, res) => {
     // Return success response
     res.status(201).json({
       message: 'Order created successfully',
-      order: orderDetails
+      order: orderResult.order
     });
   } catch (error) {
     console.error('Error in createOrder:', error);
