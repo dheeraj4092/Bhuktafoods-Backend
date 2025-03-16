@@ -7,6 +7,8 @@ const allowedOrigins = [
   'https://www.bhuktafoods.com',
   'https://bhuktafoods.com',
   'https://bhuktafoods-backend.vercel.app',
+  'https://bhuktafoods-backend-eh2f5k2nf-dheeraj4092s-projects.vercel.app',
+  'https://bhuktafoods-backend-aj02dayur-dheeraj4092s-projects.vercel.app',
   'http://localhost:3000',
   'http://localhost:5173', // Vite default port
   process.env.CORS_ORIGIN
@@ -25,9 +27,13 @@ const corsOptions = {
     }
 
     // Check if the origin is allowed
-    const isAllowed = allowedOrigins.some(allowedOrigin => 
-      origin.toLowerCase().startsWith(allowedOrigin.toLowerCase())
-    );
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (!allowedOrigin) return false;
+      // Check if origin matches exactly or is a subdomain of allowed origin
+      return origin.toLowerCase() === allowedOrigin.toLowerCase() ||
+             origin.toLowerCase().endsWith('.' + allowedOrigin.toLowerCase()) ||
+             origin.toLowerCase().includes('vercel.app'); // Allow all Vercel preview deployments
+    });
 
     if (isAllowed) {
       console.log('Origin is allowed:', origin);
@@ -59,12 +65,31 @@ export const handlePreflight = (req, res, next) => {
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-my-custom-header');
-    res.header('Access-Control-Max-Age', '86400');
-    console.log('Preflight response sent');
-    return res.status(204).send();
+    // Get the origin from the request
+    const origin = req.headers.origin;
+    
+    // Check if the origin is allowed
+    const isAllowed = !origin || process.env.NODE_ENV !== 'production' || 
+                     allowedOrigins.some(allowedOrigin => {
+                       if (!allowedOrigin) return false;
+                       return origin.toLowerCase() === allowedOrigin.toLowerCase() ||
+                              origin.toLowerCase().endsWith('.' + allowedOrigin.toLowerCase()) ||
+                              origin.toLowerCase().includes('vercel.app');
+                     });
+
+    if (isAllowed) {
+      // If origin is allowed, set it in the response header
+      res.header('Access-Control-Allow-Origin', origin || '*');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-my-custom-header');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Max-Age', '86400');
+      console.log('Preflight response sent for origin:', origin);
+      return res.status(204).send();
+    } else {
+      console.log('Origin not allowed in preflight:', origin);
+      return res.status(403).json({ error: 'Not allowed by CORS' });
+    }
   }
   next();
 }; 
