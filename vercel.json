@@ -1,11 +1,13 @@
 {
   "version": 2,
+  "framework": "node",
   "builds": [
     {
       "src": "src/index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["src/**"]
+        "includeFiles": ["src/**"],
+        "maxLambdaSize": "50mb"
       }
     }
   ],
