@@ -4,86 +4,29 @@ import { sendOrderConfirmationEmail, sendAdminNotificationEmail } from '../servi
 // Create order
 export const createOrder = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { shipping_address, items, total_amount } = req.body;
+    // Create order first
+    const { data: order, error } = await supabase
+      .from('orders')
+      .insert([req.body])
+      .select()
+      .single();
 
-    // Basic validation
-    if (!shipping_address || !items || !total_amount) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+    if (error) throw error;
 
-    // Validate items array
-    if (!Array.isArray(items)) {
-      return res.status(400).json({ error: 'Items must be an array' });
-    }
-
-    // Validate each item has required fields
-    for (const item of items) {
-      if (!item.product_id || !item.quantity || !item.quantity_unit || !item.unit_price) {
-        return res.status(400).json({ 
-          error: 'Each item must have product_id, quantity, quantity_unit, and unit_price' 
-        });
-      }
-
-      // Validate quantity_unit
-      if (!['250g', '500g', '1Kg'].includes(item.quantity_unit)) {
-        return res.status(400).json({ 
-          error: 'Invalid quantity_unit. Must be one of: 250g, 500g, 1Kg' 
-        });
-      }
-    }
-
-    // Call the database function to create order
-    const { data, error } = await supabase
-      .rpc('create_order', {
-        p_user_id: userId,
-        p_shipping_address: shipping_address,
-        p_items: items.map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          quantity_unit: item.quantity_unit,
-          unit_price: item.unit_price
-        })),
-        p_total_amount: total_amount
-      });
-
-    if (error) {
-      console.error('Order creation error:', error);
-      return res.status(500).json({ error: 'Failed to create order' });
-    }
-
-    // Get order details using the new function
-    const { data: orderDetails, error: detailsError } = await supabase
-      .rpc('get_order_details', { p_order_id: data.order_id });
-
-    if (detailsError) {
-      console.error('Error fetching order details:', detailsError);
-      return res.status(500).json({ error: 'Failed to fetch order details' });
-    }
-
-    // Send email notifications
-    try {
-      // Send confirmation email to customer
-      await sendOrderConfirmationEmail(orderDetails, shipping_address.email);
-      
-      // Send notification email to admin
-      await sendAdminNotificationEmail(orderDetails);
-    } catch (emailError) {
-      console.error('Error sending email notifications:', emailError);
-      // Don't fail the order creation if email sending fails
-    }
-
-    res.status(201).json({
-      success: true,
-      order: orderDetails,
-      message: 'Order placed successfully'
+    // Send emails asynchronously - don't wait for them
+    Promise.all([
+      sendOrderConfirmationEmail(order, order.shipping_address.email),
+      sendAdminNotificationEmail(order)
+    ]).catch(error => {
+      console.error('Error sending order emails:', error);
+      // Log to your error tracking service
     });
+
+    // Respond immediately after order creation
+    res.status(201).json(order);
   } catch (error) {
-    console.error('Order creation error:', error);
-    res.status(500).json({ 
-      error: 'Failed to create order',
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    console.error('Error creating order:', error);
+    res.status(500).json({ error: 'Failed to create order' });
   }
 };
 

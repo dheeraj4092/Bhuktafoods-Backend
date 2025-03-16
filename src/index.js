@@ -25,13 +25,22 @@ import { errorHandler, notFoundHandler } from './middleware/errorMiddleware.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Timeout middleware
+const timeout = (req, res, next) => {
+    // Set timeout to 9.5 seconds (leaving 500ms buffer for Vercel's 10s limit)
+    res.setTimeout(9500, () => {
+        res.status(408).json({ error: 'Request timeout' });
+    });
+    next();
+};
+
 // Initialize Express app
 const app = express();
 
-// Apply CORS middleware
+// Apply middlewares
+app.use(timeout);  // Add timeout middleware
 app.use(corsMiddleware);
 app.use(handlePreflight);
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

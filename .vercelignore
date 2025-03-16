@@ -1,0 +1,12 @@
+.git
+.env
+.env.local
+node_modules
+npm-debug.log
+.DS_Store
+.vscode/
+coverage/
+*.test.js
+jest.config.js
+README.md
+.gitignore

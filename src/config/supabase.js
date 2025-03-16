@@ -11,32 +11,28 @@ if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
   throw new Error('Missing required Supabase environment variables');
 }
 
-// Regular client for user operations with optimized settings for serverless
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-    detectSessionInUrl: false
-  },
-  global: {
-    headers: {
-      'x-my-custom-header': 'bhuktafoods-backend'
+// Create a Supabase client with timeouts
+const options = {
+    auth: {
+        autoRefreshToken: true,
+        persistSession: false
+    },
+    global: {
+        headers: { 'x-my-custom-header': 'bhuktafoods-backend' },
+    },
+    db: {
+        schema: 'public'
+    },
+    realtime: {
+        timeout: 8000 // 8 seconds
     }
-  }
-});
+};
+
+// Regular client for user operations with optimized settings for serverless
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, options);
 
 // Admin client for administrative operations with optimized settings for serverless
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  },
-  global: {
-    headers: {
-      'x-my-custom-header': 'bhuktafoods-backend-admin'
-    }
-  }
-});
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, options);
 
 // Database table names
 export const TABLES = {

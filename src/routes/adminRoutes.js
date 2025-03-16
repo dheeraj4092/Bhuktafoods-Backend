@@ -71,25 +71,16 @@ router.use(authenticateToken, isAdmin);
 // Get dashboard data
 router.get('/dashboard', async (req, res) => {
     try {
-        // Get total users
-        const { count: totalUsers } = await supabaseAdmin
-            .from('profiles')
-            .select('*', { count: 'exact', head: true });
-
-        // Get total products
-        const { count: totalProducts } = await supabaseAdmin
-            .from('products')
-            .select('*', { count: 'exact', head: true });
-
-        // Get total orders
-        const { count: totalOrders } = await supabaseAdmin
-            .from('orders')
-            .select('*', { count: 'exact', head: true });
+        const [usersResult, productsResult, ordersResult] = await Promise.all([
+            supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
+            supabaseAdmin.from('products').select('*', { count: 'exact', head: true }),
+            supabaseAdmin.from('orders').select('*', { count: 'exact', head: true })
+        ]);
 
         res.json({
-            totalUsers,
-            totalProducts,
-            totalOrders
+            totalUsers: usersResult.count,
+            totalProducts: productsResult.count,
+            totalOrders: ordersResult.count
         });
     } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -97,16 +88,35 @@ router.get('/dashboard', async (req, res) => {
     }
 });
 
-// Get all users
+// Get all users with pagination
 router.get('/users', async (req, res) => {
     try {
-        const { data: users, error } = await supabaseAdmin
-            .from('profiles')
-            .select('*')
-            .order('created_at', { ascending: false });
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const start = (page - 1) * limit;
+
+        const [{ count }, { data: users, error }] = await Promise.all([
+            supabaseAdmin
+                .from('profiles')
+                .select('*', { count: 'exact', head: true }),
+            supabaseAdmin
+                .from('profiles')
+                .select('*')
+                .range(start, start + limit - 1)
+                .order('created_at', { ascending: false })
+        ]);
 
         if (error) throw error;
-        res.json(users);
+
+        res.json({
+            users,
+            pagination: {
+                page,
+                limit,
+                total: count,
+                totalPages: Math.ceil(count / limit)
+            }
+        });
     } catch (error) {
         console.error('Error fetching users:', error);
         res.status(500).json({ error: 'Failed to fetch users' });
