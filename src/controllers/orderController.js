@@ -81,11 +81,11 @@ export const getOrders = async (req, res) => {
           id,
           quantity,
           quantity_unit,
-          price_at_time,
+          price,
           products (
             id,
             name,
-            image_url
+            image
           )
         )
       `)
@@ -114,7 +114,23 @@ export const getOrder = async (req, res) => {
     const { id } = req.params;
 
     const { data: order, error } = await supabase
-      .rpc('get_order_details', { p_order_id: id });
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          id,
+          quantity,
+          quantity_unit,
+          price,
+          products (
+            id,
+            name,
+            image
+          )
+        )
+      `)
+      .eq('id', id)
+      .single();
 
     if (error) {
       console.error('Get order error:', error);
@@ -171,7 +187,23 @@ export const updateOrderStatus = async (req, res) => {
 
     // Get updated order details
     const { data: orderDetails, error: detailsError } = await supabase
-      .rpc('get_order_details', { p_order_id: id });
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          id,
+          quantity,
+          quantity_unit,
+          price,
+          products (
+            id,
+            name,
+            image
+          )
+        )
+      `)
+      .eq('id', id)
+      .single();
 
     if (detailsError) {
       console.error('Error fetching updated order details:', detailsError);
