@@ -9,32 +9,91 @@ export const createOrder = async (req, res) => {
     // Calculate total amount
     const total_amount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
     
-    // Transform items into the expected format for the create_order function
-    const transformed_items = items.map(item => ({
+    // Start a transaction to create the order
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        user_id: req.user.id,
+        shipping_address: shippingAddress,
+        total_amount: parseFloat(total_amount.toFixed(2)),
+        status: 'processing'
+      })
+      .select()
+      .single();
+
+    if (orderError) {
+      console.error('Error creating order:', orderError);
+      throw orderError;
+    }
+
+    // Create order items
+    const orderItems = items.map(item => ({
+      order_id: order.id,
       product_id: item.id,
-      quantity: item.quantity,
+      quantity: parseInt(item.quantity),
       quantity_unit: item.quantity_unit || '250g',
-      unit_price: item.price
+      price_at_time: parseFloat(item.price)
     }));
 
-    // Call the create_order function with parameters in the correct order
-    const { data, error } = await supabase.rpc('create_order', {
-      p_user_id: req.user.id,           // 1st parameter
-      p_shipping_address: shippingAddress, // 2nd parameter
-      p_items: transformed_items,        // 3rd parameter
-      p_total_amount: total_amount      // 4th parameter
-    });
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(orderItems);
 
-    if (error) {
-      console.error('Error creating order:', error);
-      throw error;
+    if (itemsError) {
+      console.error('Error creating order items:', itemsError);
+      throw itemsError;
+    }
+
+    // Update product stock
+    for (const item of items) {
+      const { error: stockError } = await supabase
+        .from('products')
+        .update({ 
+          stock_quantity: supabase.raw('stock_quantity - ?', [parseInt(item.quantity)])
+        })
+        .eq('id', item.id);
+
+      if (stockError) {
+        console.error('Error updating stock:', stockError);
+        throw stockError;
+      }
+    }
+
+    // Clear cart items
+    const { error: cartError } = await supabase
+      .from('cart_items')
+      .delete()
+      .in('cart_id', 
+        supabase
+          .from('shopping_cart')
+          .select('id')
+          .eq('user_id', req.user.id)
+      );
+
+    if (cartError) {
+      console.error('Error clearing cart:', cartError);
+      // Don't throw here, as the order is already created
     }
 
     // Get the created order details
     const { data: orderDetails, error: detailsError } = await supabase
-      .rpc('get_order_details', { 
-        p_order_id: data.order_id 
-      });
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          id,
+          quantity,
+          quantity_unit,
+          price_at_time,
+          products (
+            id,
+            name,
+            image_url
+          )
+        )
+      `)
+      .eq('id', order.id)
+      .single();
 
     if (detailsError) {
       console.error('Error fetching order details:', detailsError);
