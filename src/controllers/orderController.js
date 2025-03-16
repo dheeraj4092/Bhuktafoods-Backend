@@ -4,18 +4,52 @@ import { sendOrderConfirmationEmail, sendAdminNotificationEmail } from '../servi
 // Create order
 export const createOrder = async (req, res) => {
   try {
+    const { items, shippingAddress, paymentMethod } = req.body;
+    
+    // Calculate total amount
+    const total_amount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+    
+    // Transform the data into the expected format
+    const orderData = {
+      user_id: req.user.id,
+      shipping_address: {
+        ...shippingAddress,
+        email: req.user.email // Get email from authenticated user
+      },
+      total_amount,
+      payment_method: paymentMethod,
+      order_items: items.map(item => ({
+        product_id: item.id,
+        quantity: item.quantity,
+        quantity_unit: item.quantity_unit || '250g', // Default to 250g if not specified
+        unit_price: item.price
+      }))
+    };
+
     // Create order first
     const { data: order, error } = await supabase
       .from('orders')
-      .insert([req.body])
+      .insert([orderData])
       .select()
       .single();
 
     if (error) throw error;
 
+    // Create order items
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(
+        orderData.order_items.map(item => ({
+          order_id: order.id,
+          ...item
+        }))
+      );
+
+    if (itemsError) throw itemsError;
+
     // Send emails asynchronously - don't wait for them
     Promise.all([
-      sendOrderConfirmationEmail(order, order.shipping_address.email),
+      sendOrderConfirmationEmail(order, orderData.shipping_address.email),
       sendAdminNotificationEmail(order)
     ]).catch(error => {
       console.error('Error sending order emails:', error);
@@ -26,7 +60,7 @@ export const createOrder = async (req, res) => {
     res.status(201).json(order);
   } catch (error) {
     console.error('Error creating order:', error);
-    res.status(500).json({ error: 'Failed to create order' });
+    res.status(500).json({ error: 'Failed to create order', details: error.message });
   }
 };
 
