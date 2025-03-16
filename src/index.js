@@ -25,20 +25,10 @@ import { errorHandler, notFoundHandler } from './middleware/errorMiddleware.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Timeout middleware
-const timeout = (req, res, next) => {
-    // Set timeout to 9.5 seconds (leaving 500ms buffer for Vercel's 10s limit)
-    res.setTimeout(9500, () => {
-        res.status(408).json({ error: 'Request timeout' });
-    });
-    next();
-};
-
 // Initialize Express app
 const app = express();
 
 // Apply middlewares
-app.use(timeout);  // Add timeout middleware
 app.use(corsMiddleware);
 app.use(handlePreflight);
 app.use(express.json());
@@ -47,12 +37,8 @@ app.use(express.urlencoded({ extended: true }));
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`Incoming request: ${req.method} ${req.path}`);
-  console.log('Headers:', req.headers);
   next();
 });
-
-// Serve static files - make sure this comes before API routes
-app.use(express.static(path.join(__dirname, 'public')));
 
 // API routes
 app.use('/api/products', productRoutes);
@@ -65,34 +51,14 @@ app.use('/api/delivery', deliveryRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/pincodes', pincodeRoutes);
 
-// Serve admin dashboard - ensure these routes work with the static file serving
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html'));
-});
-
-app.get('/admin/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html'));
-});
-
-// Serve admin dashboard only after authentication
-app.get('/admin/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html'));
-});
-
-// Catch-all route for admin pages to handle client-side routing
-app.get('/admin/*', (req, res) => {
-  // Check if the request is for a static file
-  if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico)$/)) {
-    res.sendFile(path.join(__dirname, 'public', 'admin', req.path));
-    return;
-  }
-  // For all other routes, redirect to login
-  res.redirect('/admin/login');
-});
-
 // Root route
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Snackolicious Delights API' });
+});
+
+// API health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'healthy' });
 });
 
 // Handle 404s
@@ -110,7 +76,6 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// Export both the app and a serverless handler
 export default app;
 
 // Serverless handler for Vercel
