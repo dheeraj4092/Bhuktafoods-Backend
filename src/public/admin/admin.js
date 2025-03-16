@@ -110,8 +110,21 @@ async function loadUsers() {
             throw new Error('Failed to load users');
         }
         
-        const users = await response.json();
+        const data = await response.json();
+        const users = data.users; // Extract users array from response
+        
+        if (!Array.isArray(users)) {
+            console.error('Invalid users data received:', users);
+            throw new Error('Invalid users data received from server');
+        }
+        
         const tbody = document.getElementById('users-table-body');
+        
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">No users found</td></tr>';
+            return;
+        }
+        
         tbody.innerHTML = users.map(user => `
             <tr>
                 <td>${user.id}</td>
@@ -345,8 +358,12 @@ function showOrderDetails(order) {
 // Update order status
 async function updateOrderStatus(orderId) {
     try {
-        const status = await showStatusUpdateModal();
-        if (!status) return;
+        const statusSelect = document.getElementById('statusSelect');
+        const status = statusSelect.value;
+        
+        if (!status) {
+            throw new Error('Please select a status');
+        }
 
         const response = await fetch(`/api/admin/orders/${orderId}/status`, {
             method: 'PUT',
@@ -357,13 +374,27 @@ async function updateOrderStatus(orderId) {
             body: JSON.stringify({ status })
         });
         
-        if (!response.ok) throw new Error('Failed to update order status');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update order status');
+        }
+
+        const updatedOrder = await response.json();
         
+        // Show success message
         showSuccess('Order status updated successfully');
+        
+        // Close modal if open
+        const modal = bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal'));
+        if (modal) {
+            modal.hide();
+        }
+        
+        // Reload orders list
         loadOrders();
     } catch (error) {
         console.error('Error updating order status:', error);
-        showError('Failed to update order status');
+        showError(error.message || 'Failed to update order status');
     }
 }
 
@@ -682,12 +713,24 @@ async function updateProduct(event) {
         submitButton.disabled = true;
         submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
 
+        // Convert form data to JSON object
+        const jsonData = {
+            name: formData.get('name'),
+            description: formData.get('description'),
+            price: parseFloat(formData.get('price')),
+            stock_quantity: parseInt(formData.get('stock_quantity')),
+            category: formData.get('category'),
+            is_available: formData.get('is_available') === 'on',
+            is_pre_order: formData.get('is_pre_order') === 'on'
+        };
+
         const response = await fetch(`/api/admin/products/${productId}`, {
             method: 'PUT',
             headers: {
+                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: formData
+            body: JSON.stringify(jsonData)
         });
         
         if (!response.ok) {
@@ -705,7 +748,7 @@ async function updateProduct(event) {
         }
         
         // Reload products list
-        await loadProducts();
+        loadProducts();
     } catch (error) {
         console.error('Error updating product:', error);
         showError(error.message || 'Failed to update product');
@@ -718,7 +761,9 @@ async function updateProduct(event) {
 
 // Delete product function
 async function deleteProduct(productId) {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm('Are you sure you want to delete this product?')) {
+        return;
+    }
     
     try {
         const response = await fetch(`/api/admin/products/${productId}`, {
@@ -729,12 +774,15 @@ async function deleteProduct(productId) {
         });
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to delete product');
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to delete product');
         }
         
-        loadProducts();
+        // Show success message
         showSuccess('Product deleted successfully');
+        
+        // Reload products list
+        loadProducts();
     } catch (error) {
         console.error('Error deleting product:', error);
         showError(error.message || 'Failed to delete product');

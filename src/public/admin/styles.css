@@ -46,6 +46,16 @@ body {
     font-size: 1.1rem;
 }
 
+/* Logout button styles */
+.sidebar .nav-link.text-danger {
+    color: #f56565;
+}
+
+.sidebar .nav-link.text-danger:hover {
+    color: #fff;
+    background-color: rgba(245, 101, 101, 0.2);
+}
+
 /* Main Content Styles */
 main {
     background-color: #f8f9fa;
