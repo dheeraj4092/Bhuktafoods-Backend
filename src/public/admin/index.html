@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snackolicious Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">Snackolicious Admin</h4>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" data-section="dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="users">
+                                <i class="bi bi-people"></i> Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="products">
+                                <i class="bi bi-box"></i> Products
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="orders">
+                                <i class="bi bi-cart"></i> Orders
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="subscriptions">
+                                <i class="bi bi-star"></i> Subscriptions
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div id="content">
+                    <!-- Dashboard Section -->
+                    <div id="dashboard-section" class="section active">
+                        <h2 class="mt-4">Dashboard</h2>
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Users</h5>
+                                        <p class="card-text" id="total-users">Loading...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Products</h5>
+                                        <p class="card-text" id="total-products">Loading...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Orders</h5>
+                                        <p class="card-text" id="total-orders">Loading...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Users Section -->
+                    <div id="users-section" class="section">
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <h2>Users</h2>
+                            <button class="btn btn-primary" onclick="showAddUserModal()">
+                                <i class="bi bi-plus-circle"></i> Add User
+                            </button>
+                        </div>
+                        <div class="table-responsive mt-4">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <!-- Users will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Products Section -->
+                    <div id="products-section" class="section">
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <h2>Products</h2>
+                            <button class="btn btn-primary" onclick="showAddProductModal()">
+                                <i class="bi bi-plus-circle"></i> Add Product
+                            </button>
+                        </div>
+                        <div class="table-responsive mt-4">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Price</th>
+                                        <th>Stock</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="products-table-body">
+                                    <!-- Products will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Orders Section -->
+                    <div id="orders-section" class="section">
+                        <h2 class="mt-4">Orders</h2>
+                        <div class="table-responsive mt-4">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orders-table-body">
+                                    <!-- Orders will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Subscriptions Section -->
+                    <div id="subscriptions-section" class="section">
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <h2>Subscriptions</h2>
+                            <button class="btn btn-primary" onclick="showAddSubscriptionModal()">
+                                <i class="bi bi-plus-circle"></i> Add Subscription Plan
+                            </button>
+                        </div>
+                        <div class="table-responsive mt-4">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Price</th>
+                                        <th>Duration (Days)</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subscriptions-table-body">
+                                    <!-- Subscriptions will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add User Modal -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control" name="full_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" name="role" required>
+                                <option value="customer">Customer</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addUser()">Add User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div class="modal fade" id="addProductModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addProductForm" onsubmit="addProduct(event)" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Price</label>
+                            <input type="number" class="form-control" id="price" name="price" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-control" id="category" name="category" required>
+                                <option value="snacks">Traditional Snacks</option>
+                                <option value="fresh">Fresh Foods</option>
+                                <option value="pickles-veg">Veg Pickles</option>
+                                <option value="pickles-nonveg">Non-Veg Pickles</option>
+                                <option value="sweets">Sweets</option>
+                                <option value="instant-premix">Instant Pre-mix</option>
+                                <option value="podi">Podi</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Product Image</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="isAvailable" name="isAvailable" value="true" checked>
+                                <label class="form-check-label" for="isAvailable">Available</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="isPreOrder" name="isPreOrder" value="true">
+                                <label class="form-check-label" for="isPreOrder">Pre-order</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Product</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addProduct()">Add Product</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Subscription Modal -->
+    <div class="modal fade" id="addSubscriptionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Subscription Plan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSubscriptionForm" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Price</label>
+                            <input type="number" class="form-control" id="price" name="price" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="duration_days" class="form-label">Duration (Days)</label>
+                            <input type="number" class="form-control" id="duration_days" name="duration_days" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Subscription Image</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                            <div id="currentImage" class="mt-2" style="display: none;">
+                                <img src="" alt="Current image" style="max-width: 200px; max-height: 200px;" class="mb-2">
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="removeImage()">Remove Image</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="features" class="form-label">Features (one per line)</label>
+                            <textarea class="form-control" id="features" name="features" rows="4" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="benefits" class="form-label">Benefits (one per line)</label>
+                            <textarea class="form-control" id="benefits" name="benefits" rows="4" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="restrictions" class="form-label">Restrictions (one per line)</label>
+                            <textarea class="form-control" id="restrictions" name="restrictions" rows="4"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="true" checked>
+                                <label class="form-check-label" for="is_active">Active</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addSubscription()">Add Subscription</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Subscription Detail Modal -->
+    <div class="modal fade" id="subscriptionDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Subscription Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="subscription-image-container mb-3">
+                                <img id="subscription-detail-image" src="" alt="Subscription Image" class="img-fluid rounded" style="max-height: 300px; width: 100%; object-fit: cover;">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h3 id="subscription-detail-name" class="mb-3"></h3>
+                            <p id="subscription-detail-description" class="text-muted"></p>
+                            <div class="subscription-details mt-3">
+                                <p><strong>Price:</strong> $<span id="subscription-detail-price"></span></p>
+                                <p><strong>Duration:</strong> <span id="subscription-detail-duration"></span> days</p>
+                                <p><strong>Status:</strong> <span id="subscription-detail-status"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <h5>Features</h5>
+                            <ul id="subscription-detail-features" class="list-unstyled">
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>Benefits</h5>
+                            <ul id="subscription-detail-benefits" class="list-unstyled">
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>Restrictions</h5>
+                            <ul id="subscription-detail-restrictions" class="list-unstyled">
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="editSubscriptionFromDetail()">Edit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="editUserFullName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editUserEmail" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" id="editUserRole" required>
+                                <option value="customer">Customer</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateUser()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div class="modal fade" id="editProductModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProductForm" onsubmit="updateProduct(event)">
+                        <input type="hidden" name="productId" id="editProductId">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" name="name" id="editProductName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-control" name="category" id="editProductCategory" required>
+                                <option value="snacks">Traditional Snacks</option>
+                                <option value="fresh">Fresh Foods</option>
+                                <option value="pickles-veg">Veg Pickles</option>
+                                <option value="pickles-nonveg">Non-Veg Pickles</option>
+                                <option value="sweets">Sweets</option>
+                                <option value="instant-premix">Instant Pre-mix</option>
+                                <option value="podi">Podi</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" id="editProductDescription" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Price</label>
+                            <input type="number" class="form-control" name="price" id="editProductPrice" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Stock Quantity</label>
+                            <input type="number" class="form-control" name="stock_quantity" id="editProductStock" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Product Image</label>
+                            <input type="file" class="form-control" name="image" id="editProductImage" accept="image/*">
+                            <small class="text-muted">Leave empty to keep the current image</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="is_available" id="editProductAvailable">
+                                <label class="form-check-label">Available</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="is_pre_order" id="editProductPreOrder">
+                                <label class="form-check-label">Pre-order</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="editProductForm" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div id="orderDetailsContent">
+                <!-- Content will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div class="modal fade" id="statusUpdateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Order Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="statusSelect" class="form-label">Select New Status</label>
+                        <select class="form-select" id="statusSelect">
+                            <option value="">Choose a status...</option>
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelStatusUpdate">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="updateStatusBtn">Update Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html> 
