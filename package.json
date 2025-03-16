@@ -5,12 +5,12 @@
   "main": "src/index.js",
   "type": "module",
   "engines": {
-    "node": ">=18.x"
+    "node": "18.x"
   },
   "scripts": {
     "start": "node src/index.js",
-    "build": "echo 'Build step completed'",
-    "vercel-build": "echo 'Build step completed'",
+    "build": "node src/index.js",
+    "vercel-build": "node src/index.js",
     "dev": "nodemon src/index.js",
     "test": "jest"
   },

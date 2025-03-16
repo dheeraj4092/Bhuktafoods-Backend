@@ -110,5 +110,14 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// Export the app for serverless deployment
+// Export both the app and a serverless handler
 export default app;
+
+// Serverless handler for Vercel
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+};

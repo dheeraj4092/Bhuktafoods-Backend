@@ -10,3 +10,5 @@ coverage/
 jest.config.js
 README.md
 .gitignore
+uploads/*
+!uploads/.gitkeep
