@@ -17,13 +17,16 @@ export const createOrder = async (req, res) => {
       unit_price: item.price
     }));
 
-    // Call the create_order function
-    const { data, error } = await supabase.rpc('create_order', {
+    // Ensure proper typing for the parameters
+    const orderParams = {
       p_user_id: req.user.id,
-      p_shipping_address: shippingAddress,
-      p_items: transformed_items,
-      p_total_amount: total_amount
-    });
+      p_shipping_address: JSON.stringify(shippingAddress), // Ensure JSONB format
+      p_items: JSON.stringify(transformed_items), // Ensure JSONB array format
+      p_total_amount: Number(total_amount) // Ensure decimal format
+    };
+
+    // Call the create_order function
+    const { data, error } = await supabase.rpc('create_order', orderParams);
 
     if (error) {
       console.error('Error creating order:', error);
