@@ -358,11 +358,12 @@ function showOrderDetails(order) {
 // Update order status
 async function updateOrderStatus(orderId) {
     try {
-        const statusSelect = document.getElementById('statusSelect');
-        const status = statusSelect.value;
+        // First show the modal and wait for status selection
+        const selectedStatus = await showStatusUpdateModal();
         
-        if (!status) {
-            throw new Error('Please select a status');
+        // If user cancelled, just return
+        if (!selectedStatus) {
+            return;
         }
 
         const response = await fetch(`/api/admin/orders/${orderId}/status`, {
@@ -371,7 +372,7 @@ async function updateOrderStatus(orderId) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ status })
+            body: JSON.stringify({ status: selectedStatus })
         });
         
         if (!response.ok) {
@@ -383,12 +384,6 @@ async function updateOrderStatus(orderId) {
         
         // Show success message
         showSuccess('Order status updated successfully');
-        
-        // Close modal if open
-        const modal = bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal'));
-        if (modal) {
-            modal.hide();
-        }
         
         // Reload orders list
         loadOrders();
