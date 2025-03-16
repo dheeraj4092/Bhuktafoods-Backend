@@ -4,63 +4,61 @@ import { sendOrderConfirmationEmail, sendAdminNotificationEmail } from '../servi
 // Create order
 export const createOrder = async (req, res) => {
   try {
-    const { items, shippingAddress, paymentMethod } = req.body;
+    const { items, shippingAddress } = req.body;
     
     // Calculate total amount
     const total_amount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
     
-    // Transform the data into the expected format
-    const orderData = {
-      user_id: req.user.id,
-      shipping_address: {
-        ...shippingAddress,
-        email: req.user.email // Get email from authenticated user
-      },
-      total_amount,
-      payment_method: paymentMethod,
-      order_items: items.map(item => ({
-        product_id: item.id,
-        quantity: item.quantity,
-        quantity_unit: item.quantity_unit || '250g', // Default to 250g if not specified
-        unit_price: item.price
-      }))
-    };
+    // Transform items into the expected format for the create_order function
+    const transformed_items = items.map(item => ({
+      product_id: item.id,
+      quantity: item.quantity,
+      quantity_unit: item.quantity_unit || '250g',
+      unit_price: item.price
+    }));
 
-    // Create order first
-    const { data: order, error } = await supabase
-      .from('orders')
-      .insert([orderData])
-      .select()
-      .single();
+    // Call the create_order function
+    const { data, error } = await supabase.rpc('create_order', {
+      p_user_id: req.user.id,
+      p_shipping_address: shippingAddress,
+      p_items: transformed_items,
+      p_total_amount: total_amount
+    });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
 
-    // Create order items
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(
-        orderData.order_items.map(item => ({
-          order_id: order.id,
-          ...item
-        }))
-      );
+    // Get the created order details
+    const { data: orderDetails, error: detailsError } = await supabase
+      .rpc('get_order_details', { 
+        p_order_id: data.order_id 
+      });
 
-    if (itemsError) throw itemsError;
+    if (detailsError) {
+      console.error('Error fetching order details:', detailsError);
+      throw detailsError;
+    }
 
     // Send emails asynchronously - don't wait for them
     Promise.all([
-      sendOrderConfirmationEmail(order, orderData.shipping_address.email),
-      sendAdminNotificationEmail(order)
+      sendOrderConfirmationEmail(orderDetails, shippingAddress.email),
+      sendAdminNotificationEmail(orderDetails)
     ]).catch(error => {
       console.error('Error sending order emails:', error);
       // Log to your error tracking service
     });
 
-    // Respond immediately after order creation
-    res.status(201).json(order);
+    // Respond with the order details
+    res.status(201).json(orderDetails);
   } catch (error) {
     console.error('Error creating order:', error);
-    res.status(500).json({ error: 'Failed to create order', details: error.message });
+    res.status(500).json({ 
+      error: 'Failed to create order', 
+      details: error.message,
+      code: error.code 
+    });
   }
 };
 
