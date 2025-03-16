@@ -9,8 +9,8 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "build": "node src/index.js",
-    "vercel-build": "node src/index.js",
+    "build": "echo 'Build step completed'",
+    "vercel-build": "echo 'Build step completed'",
     "dev": "nodemon src/index.js",
     "test": "jest"
   },

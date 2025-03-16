@@ -1,4 +1,3 @@
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { supabase, supabaseAdmin } from '../config/supabase.js';
 
