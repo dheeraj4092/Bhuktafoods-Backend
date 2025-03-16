@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "framework": "node",
   "builds": [
     {
       "src": "src/index.js",
@@ -26,8 +25,5 @@
       "src": "/(.*)",
       "dest": "/src/index.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 } 
